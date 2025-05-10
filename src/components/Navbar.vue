@@ -6,15 +6,22 @@
         <div class="container-fluid">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <a class="navbar-brand" href="#">My Vue</a>
-                <li v-for="(page, index) in pages" class="nav-item" :key="index">
-                    <navbar-link
-                        :page="page"
-                        :isActive="activePage == index"
-                        @click.prevent="navLinkClick(index)"
-                    ></navbar-link>
+                <navbar-link
+                    v-for="(page, index) in publishedPages" class="nav-item" :key="index"
+                    :page="page"
+                    :index="index"
+                ></navbar-link>
+
+                <li>
+                    <router-link
+                    :to="'/pages'"
+                    class="nav-link"
+                    active-class="active"
+                    aria-current="page"
+                    >Pages</router-link>
                 </li>
             </ul>
-            <form class="d-flex" action="">
+            <form class="d-flex">
                 <button
                     class="btn btn-primary"
                     @click.prevent="changeTheme()"
@@ -30,13 +37,33 @@ import NavbarLink from './NavbarLink.vue';
         components: {
             NavbarLink
         },
+        inject: ['$pages', '$bus'],
         created() {
-            this.getThemeSettings()
+            this.getThemeSettings();
+
+            this.pages = this.$pages.getAllPages();
+
+            this.$bus.$on('page-updated', () => {
+                this.pages = [...this.$pages.getAllPages()];
+            });
+
+            this.$bus.$on('page-created', () => {
+                this.pages = [...this.$pages.getAllPages()];
+            });
+
+            this.$bus.$on('page-deleted', () => {
+                this.pages = [...this.$pages.getAllPages()];
+            });
         },
-        props: ['pages', 'activePage', 'navLinkClick'],
+        computed: {
+            publishedPages() {
+                return this.pages.filter(page => page.published);
+            }
+        },
         data() {
             return {
                 theme: 'dark',
+                data: []
             };
         },
         methods: {
